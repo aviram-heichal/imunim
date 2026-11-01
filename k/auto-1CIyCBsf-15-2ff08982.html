@@ -115,6 +115,10 @@ button.chk:active{transform:scale(.9)}
 .opt:disabled{cursor:default}
 .msg{font-weight:600;font-size:16px;min-height:0}.msg:empty{display:none}.msg.ok{color:#0b8a50}.msg.bad{color:#e0244a}
 .vert{direction:ltr;font-size:26px;font-weight:600;display:inline-grid;text-align:right;font-variant-numeric:tabular-nums}.vert .u{border-bottom:3px solid currentColor}
+.vg{direction:ltr;display:inline-grid;grid-template-columns:26px repeat(var(--w),46px);gap:2px 4px;font-size:30px;font-weight:600;text-align:center;align-items:center;font-variant-numeric:tabular-nums}
+.vg .ln{grid-column:1/-1;border-top:3px solid currentColor;margin:2px 0 4px}
+.vg input.d1{width:46px;height:54px;padding:0;font-size:28px;border-radius:12px}
+.vhint{font-size:15px;opacity:.7;margin-top:2px}
 .pic{font-size:26px;letter-spacing:3px;display:flex;flex-wrap:wrap;gap:4px}.pic svg{max-width:100%;height:auto}
 .grp{display:inline-flex;gap:1px;padding:3px 6px;border:2px dashed color-mix(in srgb,var(--p2) 40%,#fff);border-radius:12px;background:var(--glass2)}
 .sys .eqs{display:flex;flex-direction:column;gap:2px;border-left:3px solid currentColor;border-radius:12px 0 0 12px;padding:2px 10px}.mans{display:inline-flex;gap:14px;align-items:center;flex-wrap:wrap}.mans .gap{width:10px}.mans.pt{gap:6px}.ml{display:inline-flex;gap:6px;align-items:center;font-weight:600}
@@ -499,8 +503,30 @@ function fillAns(card, it) {
   var set = function (sel, v) { var e = card.querySelector(sel); if (e) e.value = v; };
   if (it.k === 'fq') { if (it.ans.w !== undefined) set('.w', it.ans.w); set('.n', it.ans.n); set('.d', it.ans.d); }
   else if (it.k === 'multi') it.ans.forEach(function (v, q) { set('.m' + q, v); });
+  else if (it.k === 'vert') { var bx = card.querySelectorAll('input.d1'), s = String(it.ans); for (var i = 0; i < bx.length; i++) bx[i].value = s.charAt(s.length - bx.length + i) || ''; }
   else if (it.k !== 'cmp' && it.k !== 'choice') set('input', ansStr(it));
 }
+// 31.10 (גילה): תרגיל במאונך - תיבה מתחת לכל טור, כותבים כמו במחברת: מתחילים מהאחדות (ימין) והספרות זזות שמאלה
+function vertHtml(it, done) {
+  var a = String(it.a), b = String(it.b), w = Math.max(a.length, b.length) + (it.op === '+' ? 1 : 0);
+  var cells = function (s) { var o = ''; for (var i = 0; i < w; i++) o += '<span>' + (s.charAt(s.length - w + i) || '') + '</span>'; return o; };
+  var bx = ''; for (var i = 0; i < w; i++) bx += '<input inputmode="numeric" maxlength="1" autocomplete="off" ' + (done ? 'disabled ' : '') + 'class="d1" aria-label="ספרה">';
+  return '<div class="row"><div class="vg" style="--w:' + w + '"><span></span>' + cells(a) + '<span>' + it.op + '</span>' + cells(b) + '<i class="ln"></i><span></span>' + bx + '</div></div>' + (done ? '' : '<div class="vhint">✍️ מתחילים מהאחדות (מימין)</div>');
+}
+function vertWire(c) {
+  var bx = c.querySelectorAll('input.d1'), n = bx.length;
+  var next = function () { var j = n - 1; while (j >= 0 && bx[j].value) j--; return j; };
+  Array.prototype.forEach.call(bx, function (x, i) {
+    x.addEventListener('focus', function () { var j = next(); if (!x.value && j > i) bx[j].focus(); });
+    x.addEventListener('input', function () { x.value = x.value.replace(/\D/g, '').slice(-1); if (x.value && i > 0) bx[i - 1].focus(); });
+    x.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !x.value && i < n - 1) { e.preventDefault(); bx[i + 1].value = ''; bx[i + 1].focus(); }
+      else if (e.key === 'ArrowLeft' && i > 0) bx[i - 1].focus();
+      else if (e.key === 'ArrowRight' && i < n - 1) bx[i + 1].focus();
+    });
+  });
+}
+function vertVal(c) { return Array.prototype.map.call(c.querySelectorAll('input.d1'), function (x) { return x.value; }).join('').replace(/^0+(?=\d)/, ''); }
 function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
 // אָ ניקוד לבעיות המילוליות: כפתור בכל בעיה, הבחירה נשמרת לכל השבוע
@@ -516,7 +542,7 @@ function itemCard(it, key) {
   var body = ''; if (it.pic) body += '<div class="pic">' + it.pic + '</div>';
   function inp(cls) { return '<input inputmode="decimal" ' + (done ? 'disabled ' : '') + 'class="' + (cls || '') + '">'; }
   if (it.k === 'ex') body += '<div class="row">' + it.html.replace('§', inp()) + '</div>';
-  else if (it.k === 'vert') body += '<div class="row"><div class="vert"><div>' + it.a + '</div><div class="u">' + it.op + ' ' + it.b + '</div></div><span>=</span>' + inp() + '</div>';
+  else if (it.k === 'vert') body += vertHtml(it, done);
   else if (it.k === 'cmp') body += '<div class="row"><span class="ltr math">' + it.a + ' <b>?</b> ' + it.b + '</span></div><div class="row" style="direction:ltr">' + ['<', '=', '>'].map(function (o) { return '<button class="opt" data-o="' + o + '" style="direction:ltr">' + o + '</button>'; }).join('') + '</div>';
   else if (it.k === 'choice') body += '<div>' + it.q + '</div><div class="row" style="flex-direction:column;align-items:stretch">' + it.opts.map(function (o, i) { return '<button class="opt" data-o="' + i + '">' + o + '</button>'; }).join('') + '</div>';
   else if (it.k === 'fq') body += '<div>' + it.q + '</div><div class="row ltr">' + (it.ans.w !== undefined ? inp('sm w') + ' ' : '') + frac(inp('sm n'), inp('sm d')) + '</div>';
@@ -548,6 +574,8 @@ function itemCard(it, key) {
         if (vals.some(function (v) { return !v; })) { toast(T.write); return; }
         given = vals.join(' , ');
         good = vals.every(function (v, q) { return v === norm(it.ans[q]); });
+      } else if (it.k === 'vert') {
+        given = vertVal(c); good = given === norm(it.ans);
       } else if (it.order) {
         given = c.querySelector('input').value;
         var nums = (given.match(/[\d,]+/g) || []).map(norm).filter(Boolean).join('|');
@@ -558,6 +586,7 @@ function itemCard(it, key) {
       if (good) { btn.remove(); c.querySelectorAll('input').forEach(function (x) { x.disabled = true; }); }
     };
     btn.onclick = run;
+    if (it.k === 'vert') vertWire(c);
     c.querySelectorAll('input').forEach(function (x) { x.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); }); });
   }
   return c;
@@ -662,7 +691,12 @@ function playMinute(box, prev) {
   function show() {
     var it = pool[q % pool.length]; t0 = Date.now(); miss = 0; fb.textContent = ''; fb.className = 'mfb';
     play.querySelector('.mcount').textContent = F(T.minCount, { n: n });
-    mq.innerHTML = it.html.replace('§', '<input inputmode="decimal" class="min">');
+    // 27.10 (אבירם): תשובה שנגמרת ב-0 או עם נקודה עשרונית לא נבדקת לבד. אחרת "300" נקלט לפני שהילד הספיק להוסיף עוד אפס,
+    // והוא מקבל ✔ בלי לדעת אם סיים. כאן הילד לוחץ ✓ (או Enter), ורק אז בודקים
+    // 27.10 (אבירם, תיקון): ✓ רק בנושא "כפל וחילוק ב-10, 100, 1000" (it.zr) ובשברים עשרוניים.
+    // בלוח הכפל הרגיל (6 × 5 = 30) התשובה נבדקת לבד כמו קודם
+    var ok2 = /\./.test(norm(it.ans)) || (it.zr && /0$/.test(norm(it.ans)));
+    mq.innerHTML = it.html.replace('§', '<input inputmode="decimal" class="min">' + (ok2 ? '<button type="button" class="mok" aria-label="בדיקה" style="font:inherit;font-weight:800;font-size:20px;border:0;border-radius:12px;padding:6px 14px;margin-inline-start:8px;color:#fff;background:var(--p1,#2563eb);cursor:pointer;vertical-align:middle">✓</button>' : ''));
     var inp = mq.querySelector('input'); inp.focus();
     function bad() {
       clearTimeout(wait); if (lock || !inp.value) return;
@@ -676,24 +710,30 @@ function playMinute(box, prev) {
     inp.oninput = function () {
       if (lock) return; clearTimeout(wait);
       var v = norm(inp.value), a = norm(it.ans);
-      if (v === a) {
+      if (ok2) return; // מחכים ל-✓
+      if (v === a) good();
+      else if (v.length >= a.length) wait = setTimeout(bad, 600); // רגע לראות מה כתב (ולתקן) לפני שזה נחשב טעות
+    };
+    function good() {
         n++; times.push({ txt: it.txt, ms: Date.now() - t0 }); dingOk();
         if (n > best0) { minuteLive = n - best0; flyStar(mq); starTotal(true); }
         inp.classList.add('mgood'); inp.disabled = true; fb.textContent = '✔'; fb.className = 'mfb yes';
         row(it, it.ans, 'good', '✔'); hold(650, function () { q++; show(); });
-      } else if (v.length >= a.length) wait = setTimeout(bad, 600); // רגע לראות מה כתב (ולתקן) לפני שזה נחשב טעות
-    };
-    inp.onkeydown = function (e) { if (e.key === 'Enter' && inp.value && norm(inp.value) !== norm(it.ans)) bad(); };
+    }
+    function check() { if (lock || !inp.value) return; if (norm(inp.value) === norm(it.ans)) good(); else bad(); }
+    inp.onkeydown = function (e) { if (e.key === 'Enter' && inp.value) { if (ok2) check(); else if (norm(inp.value) !== norm(it.ans)) bad(); } };
+    var okb = mq.querySelector('.mok'); if (okb) okb.onclick = function () { check(); inp.focus(); };
   }
   show();
-  var tick = setInterval(function () {
-    if (!document.body.contains(play)) { clearInterval(tick); clearTimeout(wait); minuteLive = 0; return; } // הילד עבר ליום אחר באמצע - מבטלים בלי לשמור
+  // 26.10: השעון נקרא timer. כשהוא נקרא tick הוא הסתיר את צליל התקתוק, השעון נתקע על 5 שניות והדקה לא נגמרה
+  var timer = setInterval(function () {
+    if (!document.body.contains(play)) { clearInterval(timer); clearTimeout(wait); minuteLive = 0; return; } // הילד עבר ליום אחר באמצע - מבטלים בלי לשמור
     var left = (paused ? end - paused : end - Date.now()), bar = play.querySelector('.mbar>div');
     if (bar) bar.style.width = Math.max(0, 100 * left / 60000) + '%';
     var sec = Math.max(0, Math.ceil(left / 1000)); clockN.textContent = sec; clockA.style.strokeDashoffset = 276.5 * (1 - Math.max(0, left) / 60000); clock.classList.toggle('low', sec <= 10);
     if (sec !== lastSec) { if (sec <= 5 && sec > 0) tick(); lastSec = sec; }
     if (left > 0) return;
-    clearInterval(tick); clearTimeout(wait);
+    clearInterval(timer); clearTimeout(wait);
     var best = S.minute[S.day]; if (best === undefined || n > best) S.minute[S.day] = n; minuteLive = 0; save(); starTotal(false);
     mq.innerHTML = ''; fb.textContent = ''; play.querySelector('.mcount').textContent = '';
     clockN.textContent = '0';
