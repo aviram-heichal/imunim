@@ -474,7 +474,7 @@ function check(key, good, card, msg, it, given) {
   if (good && ms) S.ms[key] = ms;
   S.given[key] = (S.given[key] || []).concat([given]).slice(-5);
   var parts_ = key.replace(/^x/, '').split('-'); // x = תרגיל מ"רוצה עוד": נרשם למורה בשורה משלו, בלי להיספר בסיכום היום
-  report({ id: DATA.id, name: DATA.name, day: Number(parts_[0]) + 1, item: (key.charAt(0) === 'x' ? '+' : '') + (Number(parts_[1]) + 1), sec: it.sec, txt: it.txt, ans: ansStr(it), given: given, good: good, ms: good ? ms : null, tries: S.tries[key] });
+  report({ id: DATA.id, name: DATA.name, day: Number(parts_[0]) + 1, item: (key.charAt(0) === 'x' ? 'עוד ' : '') + (Number(parts_[1]) + 1), sec: it.sec, txt: it.txt, ans: ansStr(it), given: given, good: good, ms: good ? ms : null, tries: S.tries[key] });
   if (good) {
     S.ok[key] = 1; card.classList.add('ok'); msg.className = 'msg ok'; msg.textContent = T.ok + (ms ? '  ⏱️ ' + F(T.sec, { s: secs(ms) }) : '');
     streak++;
@@ -494,7 +494,7 @@ function check(key, good, card, msg, it, given) {
 function reveal(key, card, msg, it) {
   S.shown[key] = 1;
   var parts_ = key.replace(/^x/, '').split('-');
-  report({ id: DATA.id, name: DATA.name, day: Number(parts_[0]) + 1, item: (key.charAt(0) === 'x' ? '+' : '') + (Number(parts_[1]) + 1), sec: it.sec, txt: it.txt, ans: ansStr(it), given: '(התשובה הוצגה)', good: false, ms: null, tries: S.tries[key] });
+  report({ id: DATA.id, name: DATA.name, day: Number(parts_[0]) + 1, item: (key.charAt(0) === 'x' ? 'עוד ' : '') + (Number(parts_[1]) + 1), sec: it.sec, txt: it.txt, ans: ansStr(it), given: '(התשובה הוצגה)', good: false, ms: null, tries: S.tries[key] });
   setTimeout(function () {
     card.classList.remove('bad'); card.classList.add('shown');
     msg.className = 'msg shown'; msg.innerHTML = T.revealHead + ' <b class="rv">' + esc(ansStr(it)) + '</b><br><span>' + T.revealNext + '</span>';
@@ -838,7 +838,7 @@ var mb = document.getElementById('mute');
 function muteIcon() { mb.textContent = S.mute ? '🔇' : '🔊'; }
 mb.onclick = function () { S.mute = !S.mute; save(); muteIcon(); };
 muteIcon();
-if (PREVIEW) { var tb = document.createElement('div'); tb.className = 'tbar'; tb.innerHTML = '📋 תצוגת מורה: כל הימים פתוחים, והתשובות לא נשמרות <a href="' + location.pathname + '">→ חזרה לתצוגת ילד</a>'; document.body.insertBefore(tb, document.querySelector('.hero')); }
+if (PREVIEW) { var tb = document.createElement('div'); tb.className = 'tbar'; tb.innerHTML = '📋 תצוגת מורה בלבד ⚠️ לא להעביר את הקישור הזה לילד או להורה. כל הימים פתוחים, והתשובות לא נשמרות <a href="' + location.pathname + '">→ חזרה לתצוגת ילד</a>'; document.body.insertBefore(tb, document.querySelector('.hero')); }
 render();
 setTimeout(introRun, 0);
 </script></body></html>
