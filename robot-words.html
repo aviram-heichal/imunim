@@ -317,7 +317,6 @@ body.duo .q .pic { height: min(18vh, 170px) }
   var d1 = [1, 2, 3, 4, 5, 6, 7, 8, 9], d2 = [10, 12, 15, 18, 22, 25, 34, 48, 50, 67, 70, 96, 99], d3 = [100, 119, 205, 254, 300, 480, 605, 777, 999];
   // בכל הזוגות 4 התוצאות שונות, כמו 6 ו-2 בסרטון: 8, 4, 12, 3
   var pairs = [[6, 2], [6, 2], [8, 2], [6, 3], [10, 2], [12, 2]];
-  function dots(n) { return new Array(n + 1).join('●'); }
   function three(list) { var a = list.slice(), o = []; while (o.length < 3 && a.length) o.push(a.splice(R(0, a.length - 1), 1)[0]); return o; }
   function S(x) { return String(x); }
   function near(c, lo) { var o = [], d = [1, -1, 2, -2, 3]; d.forEach(function (x) { if (c + x >= (lo || 0)) o.push(S(c + x)); }); return three(o); }
@@ -332,9 +331,9 @@ body.duo .q .pic { height: min(18vh, 170px) }
   }
   var B = {
     mispar: [
-      function () { var n = R(2, 12); return mk('כמה עיגולים? ' + dots(n), n, near(n, 1)); },
       function () { return mk('מה מראה מספר?', 'כמות', ['צבע', 'אות', 'ציור']); },
-      function () { var n = R(2, 7); return mk('מה מהם המספר?', n, [dots(n), 'אות', 'ציור']); },
+      function () { var n = R(2, 9); return mk('מה מהם מספר?', n, ['אות', 'ציור', 'צבע']); },
+      function () { return mk('מה זה מספר?', 'משהו שמראה כמות', ['משהו שעושים', 'אות בעברית', 'ציור']); },
       function () { return mk('אפס הוא...', 'מספר', ['אות', 'צבע', 'ציור']); },
       function () { return mk('כמה מספרים יש?', 'אין סוף', ['מיליון', 'אלף', 'מאה']); },
     ],
@@ -369,20 +368,20 @@ body.duo .q .pic { height: min(18vh, 170px) }
       function () { return mk('הסימן + הוא...', 'פעולה', ['כמות', 'אות', 'ציור']); },
     ],
     hibur: [
-      function () { var a = R(1, 6), b = R(1, 4), c = a + b; return mk(a + ' + ' + b + ' = ?', c, near(c, 1)); },
+      function () { return mk('הסימן של חיבור?', '+', ['=', '?', '!']); },
       function () { return mk('להוסיף כמות לכמות זה...', 'חיבור', wrongNames(OPN, 'חיבור')); },
     ],
     hisur: [
-      function () { var a = R(3, 10), b = R(1, a - 1), c = a - b; return mk(a + ' - ' + b + ' = ?', c, near(c, 0)); },
+      function () { return mk('הסימן של חיסור?', '-', ['+', '=', '?']); },
       function () { return mk('להוריד כמות מתוך כמות זה...', 'חיסור', wrongNames(OPN, 'חיסור')); },
     ],
     peamim: [
-      function () { var p = pick([[3, 2], [4, 2], [5, 2], [3, 3], [2, 2], [6, 2]]), c = p[0] * p[1]; return mk(p[0] + ' × ' + p[1] + ' = ?', c, near(c, 1)); },
+      function () { return mk('הסימן של כפל?', '×', ['+', '=', '?']); },
       function () { return mk('משהו שחוזר על עצמו שוב ושוב זה...', 'פעמים', ['שיר', 'צבע', 'ציור']); },
-      function () { var p = pick([[3, 2], [2, 3], [4, 2], [2, 4], [5, 2], [2, 5]]); return mk(new Array(p[0] + 1).join(dots(p[1]) + '  ') + ' איזה תרגיל זה?', p[0] + ' × ' + p[1], [p[1] + ' × ' + p[0], p[0] + ' + ' + p[1], p[1] + ' + ' + p[0]]); },
+      function () { var p = pick([[3, 2], [2, 3], [4, 2], [2, 4], [5, 2], [2, 5]]); return mk(p[0] + ' קבוצות של ' + p[1] + ' זה...', p[0] + ' × ' + p[1], [p[1] + ' × ' + p[0], p[0] + ' + ' + p[1], p[1] + ' + ' + p[0]]); },
     ],
     hiluk: [
-      function () { var p = pick([[6, 2], [6, 3], [8, 2], [8, 4], [10, 2], [9, 3]]), c = p[0] / p[1]; return mk(p[0] + ' : ' + p[1] + ' = ?', c, near(c, 1)); },
+      function () { return mk('הסימן של חילוק?', ':', ['×', '+', '=']); },
       function () { return mk('להפריד לקבוצות שוות זה...', 'חילוק', wrongNames(OPN, 'חילוק')); },
     ],
     heshbon: [
@@ -396,8 +395,8 @@ body.duo .q .pic { height: min(18vh, 170px) }
     return mk('מה ' + nm + ' של ' + a + ' ו-' + b + '?', vals[id], ['sum', 'diff', 'mult', 'quot'].filter(function (k) { return k !== id; }).map(function (k) { return vals[k]; }));
   }
   function resDef(id) {
-    var names = { sum: ['סכום', 'חיבור'], diff: ['הפרש', 'חיסור'], mult: ['מכפלה', 'כפל'], quot: ['מנה', 'חילוק'] }[id];
-    return mk('התוצאה של ' + names[1] + ' נקראת...', names[0], wrongNames(REN, names[0]));
+    var names = { sum: ['סכום', pick(['ועוד', 'חיבור'])], diff: ['הפרש', pick(['פחות', 'חיסור'])], mult: ['מכפלה', pick(['כפול', 'כפל'])], quot: ['מנה', 'חילוק'] }[id];
+    return mk('איך אומרים את התוצאה של ' + names[1] + '?', names[0], wrongNames(REN, names[0]));
   }
   var pool = [];
   ids.forEach(function (id) {
